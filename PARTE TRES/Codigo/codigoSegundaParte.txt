@@ -1,0 +1,230 @@
+/*
+-----------CONSIGNA PRIMER PARCIAL----------------------------------
+	Sustituye uno de los botones por un interruptor deslizante (switch) de dos posiciones.
+  Dependiendo de la posición del interruptor, el display debe mostrar o bien el contador (como
+  en la Parte 1) o los números primos en el rango de 0 a 99.
+    
+---------------------------------------------------------------------
+*/
+
+//DEFINICION DE LOS LEDS Y VARIABLES QUE SE VAN A UTILIZAR
+//LEDS DISPLAY
+#define A 10
+#define B 11
+#define C 5
+#define D 6
+#define E 7
+#define F 9
+#define G 8
+//INTERRUPTOR Y SENSOR
+#define INTERRUPTOR 4
+#define TEMP A3
+#define PHOTO A2
+//DISPLAYS
+#define UNIDAD A4
+#define DECENA A5
+//PARAMETROS PARA UTILIZAR LUEGO
+#define APAGADOS 0
+#define TIMEDISPLAYON 150
+
+int i = 0;
+int contadorNumero = 0;
+int interruptor = 0;
+String estadoSwitch = "contador";
+
+void setup()
+{
+  pinMode(4, INPUT);
+  pinMode(5, OUTPUT);
+  pinMode(6, OUTPUT);
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+  pinMode(10, OUTPUT);
+  pinMode(11, OUTPUT);
+  pinMode(UNIDAD, OUTPUT);
+  pinMode(DECENA, OUTPUT);
+  pinMode(TEMP, INPUT);
+  pinMode(PHOTO, INPUT_PULLUP);
+  digitalWrite(UNIDAD,0);
+  digitalWrite(DECENA,0);
+  mostrarNumero(0);
+
+  Serial.begin(9600);
+}
+
+void loop() //EN EL VOID LOOP SE DISCRIMINA ENTRENPRIMOS Y EL CONTADOR
+{
+  int luzAmbiental = analogRead(PHOTO);
+  Serial.println(luzAmbiental);
+  if (luzAmbiental<487)
+  {
+    botonPrecionado();
+    if (estadoSwitch == "primos")
+    {
+        contadorNumero++;
+        if(contadorNumero<99)
+        {
+          if(calcularNumeroPrimo(contadorNumero)==true && contadorNumero<99)
+          {
+            mostrarContador(contadorNumero);
+            int temperatura=analogRead(TEMP);
+            //Serial.println(temperatura);
+          }
+        }
+        else
+        {
+          contadorNumero = 0;
+        }
+    }
+    else if (estadoSwitch == "contador")
+    {
+      contadorNumero++;
+      if(contadorNumero>99)
+        contadorNumero = 0;
+      mostrarContador(contadorNumero);
+    }
+  }
+  else
+  {
+    prendeDigito(APAGADOS);
+  }  
+}
+
+void mostrarNumero(int numero) //PRENDE LOS LEDS DEPENDIENDO EL NUMERO
+{
+  digitalWrite(A,LOW);
+  digitalWrite(B,LOW);
+  digitalWrite(C,LOW);
+  digitalWrite(D,LOW);
+  digitalWrite(E,LOW);
+  digitalWrite(F,LOW);
+  digitalWrite(G,LOW);
+  switch(numero)
+  {
+    case 0:
+     	digitalWrite(A,HIGH);
+    	digitalWrite(B,HIGH);
+    	digitalWrite(C,HIGH);
+    	digitalWrite(D,HIGH);
+    	digitalWrite(E,HIGH);
+    	digitalWrite(F,HIGH);
+    	break;
+    case 1:
+     	digitalWrite(C,HIGH);
+    	digitalWrite(B,HIGH);
+    	break;
+    case 2:
+     	digitalWrite(A,HIGH);
+    	digitalWrite(B,HIGH);
+    	digitalWrite(G,HIGH);
+    	digitalWrite(D,HIGH);
+    	digitalWrite(E,HIGH);
+    	break;
+    case 3:
+     	digitalWrite(A,HIGH);
+    	digitalWrite(B,HIGH);
+    	digitalWrite(G,HIGH);
+    	digitalWrite(D,HIGH);
+    	digitalWrite(C,HIGH);
+    	break;
+    case 4:
+     	digitalWrite(B,HIGH);
+    	digitalWrite(C,HIGH);
+    	digitalWrite(G,HIGH);
+    	digitalWrite(F,HIGH);
+    	break;
+    case 5:
+     	digitalWrite(A,HIGH);
+    	digitalWrite(F,HIGH);
+    	digitalWrite(G,HIGH);
+    	digitalWrite(C,HIGH);
+    	digitalWrite(D,HIGH);
+    	break;
+    case 6:
+     	digitalWrite(A,HIGH);
+    	digitalWrite(F,HIGH);
+    	digitalWrite(C,HIGH);
+    	digitalWrite(D,HIGH);
+    	digitalWrite(E,HIGH);
+        digitalWrite(G,HIGH);
+    	break;
+    case 7:
+     	digitalWrite(A,HIGH);
+    	digitalWrite(B,HIGH);
+    	digitalWrite(C,HIGH);
+    	break;
+    case 8:
+     	digitalWrite(A,HIGH);
+  		digitalWrite(B,HIGH);
+  		digitalWrite(C,HIGH);
+  		digitalWrite(D,HIGH);
+  		digitalWrite(E,HIGH);
+  		digitalWrite(F,HIGH);
+  		digitalWrite(G,HIGH);
+    	break;
+    case 9:
+     	digitalWrite(A,HIGH);
+    	digitalWrite(B,HIGH);
+    	digitalWrite(C,HIGH);
+    	digitalWrite(D,HIGH);
+    	digitalWrite(F,HIGH);
+        digitalWrite(G,HIGH);
+    	break;
+  }
+}
+
+void prendeDigito(int digito) // PRENDE EL DIGITO QUE SE NECESITE MOSTRAR
+{							  // DECENA O UNIDAD
+  if(digito == UNIDAD)
+  {
+    digitalWrite(UNIDAD,HIGH);
+    digitalWrite(DECENA,LOW);
+    delay(TIMEDISPLAYON);
+  }
+  else if(digito == DECENA)
+  {
+    digitalWrite(UNIDAD,LOW);
+    digitalWrite(DECENA,HIGH);
+    delay(TIMEDISPLAYON);
+  }
+  else
+  {
+    digitalWrite(UNIDAD,HIGH);
+    digitalWrite(DECENA,HIGH);
+  }
+}
+
+void mostrarContador(int contador) //MUENTRA EL NUMERO EN EL DISPLAY
+{
+  prendeDigito(APAGADOS);
+  mostrarNumero(contador/10);
+  prendeDigito(UNIDAD);
+  prendeDigito(APAGADOS);
+  mostrarNumero(contador-10*((int)contador/10));
+  prendeDigito(DECENA);
+  delay(1000);
+}
+
+bool calcularNumeroPrimo(int contador)
+{
+  for(i=2;i<contador;i++)
+  {
+    if(contador%i==0 || contador == 9)return(false);
+  
+  }return true;  
+}
+
+int botonPrecionado(void) //LEE LOS BOTONES PARA CAMBIAR EL CONTADOR
+{
+  interruptor = digitalRead(INTERRUPTOR);
+  
+  if(interruptor == 1)
+  {
+    estadoSwitch = "contador";
+  }
+  else
+  {
+    estadoSwitch = "primos";
+  }
+}
